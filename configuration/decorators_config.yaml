@@ -1,0 +1,7 @@
+service_title: REST Model Service With Decorators
+models:
+  - qualified_name: iris_model
+    class_path: ml_model_decorators.mocks.IrisModelMock
+    create_endpoint: true
+    decorators:
+      - class_path: ml_model_decorators.prediction_id_decorator.PredictionIDDecorator
