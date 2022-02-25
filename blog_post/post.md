@@ -132,82 +132,54 @@ from ml_base.decorator import MLModelDecorator
 
 The base class for ML Model decorators is designed to hold a reference to an MLModel instance and add no behavior to it. Every method in the decorator just calls the corresponding method on the MLModel instance. This is done on purpose so that we can easily build simple decorators that only work on a single method while leaving all of the other methods and properties alone.
 
-## Mocking a Model
+## Installing a Model
 
-To make this blog post a little simpler, we'll mock an MLModel class that we can use to demonstrate the decorators.
+To make this blog post a little shorter we won't build a new model to work with. Instead we'll install a model that we've built in the past.
 
-We'll mock a model for the iris data set. To do this, we'll mock the model's schemas:
+To install the model, we can use the pip command:
 
 
 ```python
-from pydantic import BaseModel, Field
-from enum import Enum
-
-
-class ModelInput(BaseModel):
-    sepal_length: float = Field(gt=5.0, lt=8.0)
-    sepal_width: float = Field(gt=2.0, lt=6.0)
-    petal_length: float = Field(gt=1.0, lt=6.8)
-    petal_width: float = Field(gt=0.0, lt=3.0)
-
-
-class Species(str, Enum):
-    iris_setosa = "Iris setosa"
-    iris_versicolor = "Iris versicolor"
-    iris_virginica = "Iris virginica"
-
-
-class ModelOutput(BaseModel):
-    species: Species
+!pip install /Users/brian/Code/regression-model/dist/insurance_charges_model-0.1.0.tar.gz
 ```
 
-Now we can create the IrisModelMock class that uses the schema classes.
+The model is used to estimate insurance charges and we built it in a [previous blog post](https://www.tekhnoal.com/regression-model.html). The code for the model is in [this github repository](https://github.com/schmidtbri/regression-model).
+
+
+To make a prediction with the model, we'll import the model's class:
 
 
 ```python
-from ml_base.ml_model import MLModel
-
-
-class IrisModelMock(MLModel):
-    display_name = "Iris Model"
-    qualified_name = "iris_model"
-    description = "A model to predict the species of a flower based on its measurements."
-    version = "1.0.0"
-    input_schema = ModelInput
-    output_schema = ModelOutput
-
-    def __init__(self) -> None:
-        pass
-
-    def predict(self, data: ModelInput) -> ModelOutput:
-        return ModelOutput(species="Iris setosa")
+from insurance_charges_model.prediction.model import InsuranceChargesModel
 ```
 
-We can instantiate the mocked model class like this:
+Now we can instantiate the model:
 
 
 ```python
-model = IrisModelMock()
-
-model
+model = InsuranceChargesModel()
 ```
 
-
-
-
-    IrisModelMock
-
-
-
-To make predictions with the model, we'll execute the predict() method:
+To make a prediction, we'll need to use the model's input schema class.
 
 
 ```python
-prediction = model.predict(
-    ModelInput(sepal_length=5.1,
-               sepal_width=2.2,
-               petal_length=1.2,
-               petal_width=1.3))
+from insurance_charges_model.prediction.schemas import InsuranceChargesModelInput, \
+    SexEnum, RegionEnum
+
+model_input = InsuranceChargesModelInput(age=21, 
+                                         sex=SexEnum.male,
+                                         bmi=20.0,
+                                         children=0,
+                                         smoker=False,
+                                         region=RegionEnum.southwest)
+```
+
+Now we can make a prediction with the model by calling predict() with the input.
+
+
+```python
+prediction = model.predict(model_input)
 
 prediction
 ```
@@ -215,11 +187,11 @@ prediction
 
 
 
-    ModelOutput(species=<Species.iris_setosa: 'Iris setosa'>)
+    InsuranceChargesModelOutput(charges=2231.7)
 
 
 
-The mock will always return the prediction of "Iris setosa".
+The model predicts that the charges will be $2231.70.
 
 ## Decorating the Model
 
@@ -237,7 +209,7 @@ decorator
 
 
 
-    MLModelDecorator(IrisModelMock)
+    MLModelDecorator(InsuranceChargesModel)
 
 
 
@@ -255,12 +227,12 @@ print(decorator.input_schema)
 print(decorator.output_schema)
 ```
 
-    Iris Model
-    iris_model
-    A model to predict the species of a flower based on its measurements.
-    1.0.0
-    <class '__main__.ModelInput'>
-    <class '__main__.ModelOutput'>
+    Insurance Charges Model
+    insurance_charges_model
+    Model to predict the insurance charges of a customer.
+    0.1.0
+    <class 'insurance_charges_model.prediction.schemas.InsuranceChargesModelInput'>
+    <class 'insurance_charges_model.prediction.schemas.InsuranceChargesModelOutput'>
 
 
 The MLModelDecorator base class actually makes no modifications to the results that it "passes through" from the model instance.
@@ -269,11 +241,7 @@ We can also make predictions with the predict() method:
 
 
 ```python
-prediction = decorator.predict(
-    ModelInput(sepal_length=5.1,
-               sepal_width=2.2,
-               petal_length=1.2,
-               petal_width=1.3))
+prediction = decorator.predict(model_input)
 
 prediction
 ```
@@ -281,7 +249,7 @@ prediction
 
 
 
-    ModelOutput(species=<Species.iris_setosa: 'Iris setosa'>)
+    InsuranceChargesModelOutput(charges=2231.7)
 
 
 
@@ -317,11 +285,7 @@ Now, we'll call the predict method:
 
 
 ```python
-prediction = decorator.predict(ModelInput(
-    sepal_length=5.1,
-    sepal_width=2.1,
-    petal_length=1.2,
-    petal_width=1.3))
+prediction = decorator.predict(model_input)
 
 prediction
 ```
@@ -333,7 +297,7 @@ prediction
 
 
 
-    ModelOutput(species=<Species.iris_setosa: 'Iris setosa'>)
+    InsuranceChargesModelOutput(charges=2231.7)
 
 
 
@@ -354,6 +318,7 @@ Here is the code for the decorator:
 
 
 ```python
+from typing import Optional
 from pydantic import create_model
 from uuid import uuid4
 
@@ -408,7 +373,7 @@ uuid_decorated_model
 
 
 
-    PredictionIDDecorator(IrisModelMock)
+    PredictionIDDecorator(InsuranceChargesModel)
 
 
 
@@ -422,7 +387,7 @@ uuid_decorated_model.description
 
 
 
-    "A model to predict the species of a flower based on its measurements. This model also has an optional input called 'prediction_id' that accepts an UUID string to uniquely identify the prediction returned. If the prediction id is not provided, a UUID is generated and returned in a field called 'prediction_id' in the model output."
+    "Model to predict the insurance charges of a customer. This model also has an optional input called 'prediction_id' that accepts an UUID string to uniquely identify the prediction returned. If the prediction id is not provided, a UUID is generated and returned in a field called 'prediction_id' in the model output."
 
 
 
@@ -436,30 +401,62 @@ uuid_decorated_model.input_schema.schema()
 
 
 
-    {'title': 'ModelInput',
+    {'title': 'InsuranceChargesModelInput',
+     'description': "Schema for input of the model's predict method.",
      'type': 'object',
-     'properties': {'sepal_length': {'title': 'Sepal Length',
-       'exclusiveMinimum': 5.0,
-       'exclusiveMaximum': 8.0,
+     'properties': {'age': {'title': 'Age',
+       'description': 'Age of primary beneficiary in years.',
+       'minimum': 18,
+       'maximum': 65,
+       'type': 'integer'},
+      'sex': {'title': 'Sex',
+       'description': 'Gender of beneficiary.',
+       'allOf': [{'$ref': '#/definitions/SexEnum'}]},
+      'bmi': {'title': 'Body Mass Index',
+       'description': 'Body mass index of beneficiary.',
+       'minimum': 15.0,
+       'maximum': 50.0,
        'type': 'number'},
-      'sepal_width': {'title': 'Sepal Width',
-       'exclusiveMinimum': 2.0,
-       'exclusiveMaximum': 6.0,
-       'type': 'number'},
-      'petal_length': {'title': 'Petal Length',
-       'exclusiveMinimum': 1.0,
-       'exclusiveMaximum': 6.8,
-       'type': 'number'},
-      'petal_width': {'title': 'Petal Width',
-       'exclusiveMinimum': 0.0,
-       'exclusiveMaximum': 3.0,
-       'type': 'number'},
+      'children': {'title': 'Children',
+       'description': 'Number of children covered by health insurance.',
+       'minimum': 0,
+       'maximum': 5,
+       'type': 'integer'},
+      'smoker': {'title': 'Smoker',
+       'description': 'Whether beneficiary is a smoker.',
+       'type': 'boolean'},
+      'region': {'title': 'Region',
+       'description': 'Region where beneficiary lives.',
+       'allOf': [{'$ref': '#/definitions/RegionEnum'}]},
       'prediction_id': {'title': 'Prediction Id', 'type': 'string'}},
-     'required': ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']}
+     'definitions': {'SexEnum': {'title': 'SexEnum',
+       'description': "Enumeration for the value of the 'sex' input of the model.",
+       'enum': ['male', 'female'],
+       'type': 'string'},
+      'RegionEnum': {'title': 'RegionEnum',
+       'description': "Enumeration for the value of the 'region' input of the model.",
+       'enum': ['southwest', 'southeast', 'northwest', 'northeast'],
+       'type': 'string'}}}
 
 
 
 Even though the IrisModelMock didn't have a "prediction_id" in its input schema, the decorated model instance now has the field as an optional string field. This new field was added by the decorator instance.
+
+We can see the prediction_id field schema by selecting it from the properties:
+
+
+```python
+uuid_decorated_model.input_schema.schema()["properties"]["prediction_id"]
+```
+
+
+
+
+    {'title': 'Prediction Id', 'type': 'string'}
+
+
+
+The output schema of the model was also modified.
 
 
 ```python
@@ -469,27 +466,28 @@ uuid_decorated_model.output_schema.schema()
 
 
 
-    {'title': 'ModelOutput',
+    {'title': 'InsuranceChargesModelOutput',
+     'description': "Schema for output of the model's predict method.",
      'type': 'object',
-     'properties': {'species': {'$ref': '#/definitions/Species'},
+     'properties': {'charges': {'title': 'Charges',
+       'description': 'Individual medical costs billed by health insurance to customer in US dollars.',
+       'type': 'number'},
       'prediction_id': {'title': 'Prediction Id', 'type': 'string'}},
-     'required': ['species', 'prediction_id'],
-     'definitions': {'Species': {'title': 'Species',
-       'description': 'An enumeration.',
-       'enum': ['Iris setosa', 'Iris versicolor', 'Iris virginica'],
-       'type': 'string'}}}
+     'required': ['prediction_id']}
 
 
 
-The same thing is happening to the output schema, but "prediction_id" is a a required field instead, we did this because we want to always have a prediction_id associated with a prediction. To see how the decorator uses these new field, we'll make a prediction:
+In the output the "prediction_id" is a a required field, we did this because we want to always have a prediction_id associated with a prediction. To see how the decorator uses these new field, we'll make a prediction:
 
 
 ```python
 prediction = uuid_decorated_model.predict(
-    uuid_decorated_model.input_schema(sepal_length=5.1,
-                                      sepal_width=2.2,
-                                      petal_length=1.2,
-                                      petal_width=1.3))
+    uuid_decorated_model.input_schema(age=21, 
+                                      sex=SexEnum.male,
+                                      bmi=20.0,
+                                      children=0,
+                                      smoker=False,
+                                      region=RegionEnum.southwest))
 
 prediction
 ```
@@ -497,21 +495,25 @@ prediction
 
 
 
-    ModelOutput(species=<Species.iris_setosa: 'Iris setosa'>, prediction_id='605253ca-2196-44a6-b165-b18532a600eb')
+    InsuranceChargesModelOutput(charges=2231.7, prediction_id='5c587edd-2137-4c5a-8849-844b05ab2ea1')
 
 
 
 The prediction now has a randomly generated UUID attached to it by the decorator in the "prediction_id" field. 
+
+We had to use the input schema returned by the decorator because the original InsuranceChargesModelInput schema class is no longer the model's input schema. The decorator creates a new class that becomes the model's new input schema.
 
 If we want to provide a prediction_id with the model's input, the decorator will not generate a new prediction_id, instead it will return the prediction_id that was provided in the input.
 
 
 ```python
 prediction = uuid_decorated_model.predict(
-    uuid_decorated_model.input_schema(sepal_length=5.1,
-                                      sepal_width=2.2,
-                                      petal_length=1.2,
-                                      petal_width=1.3,
+    uuid_decorated_model.input_schema(age=21, 
+                                      sex=SexEnum.male,
+                                      bmi=20.0,
+                                      children=0,
+                                      smoker=False,
+                                      region=RegionEnum.southwest,
                                       prediction_id="asdf-1234-asdf-1234"))
 
 prediction
@@ -520,13 +522,11 @@ prediction
 
 
 
-    ModelOutput(species=<Species.iris_setosa: 'Iris setosa'>, prediction_id='asdf-1234-asdf-1234')
+    InsuranceChargesModelOutput(charges=2231.7, prediction_id='asdf-1234-asdf-1234')
 
 
 
 The prediction_id returned by the model now has the same prediction_id that we provided to the model's input, the prediction_id was not generated.
-
-Notice that we're using the input schema class that is returned by the decorated model instance, not the original ModelInput schema class that we defined above. The class returned by the decorated model instance is the one that will have the new field attached to it. The original input and output schemas did not have the new fields.
 
 This decorator will work with any model that works with the MLModel base class, as long as the UUID field can be attached to the root of the input and output schemas.
 
@@ -548,10 +548,10 @@ clear_output()
 In order to deploy the IrisModelMock class, we'll create a configuration YAML file for the service:
 
 ```yaml
-service_title: REST Model Service
+service_title: Insurance Charges Model Service
 models:
-  - qualified_name: iris_model
-    class_path: ml_model_decorators.mocks.IrisModelMock
+  - qualified_name: insurance_charges_model
+    class_path: insurance_charges_model.prediction.model.InsuranceChargesModel
     create_endpoint: true
 ```
 
@@ -573,23 +573,23 @@ The model is running inside of the "api/models/iris_model/prediction" endpoint. 
 
 ```python
 !(curl -X 'POST' \
-  'http://127.0.0.1:8000/api/models/iris_model/prediction' \
+  'http://127.0.0.1:8000/api/models/insurance_charges_model/prediction' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -d '{"sepal_length": 6.0, "sepal_width": 3.0, "petal_length": 2.0, "petal_width": 1.0}')
+  -d '{"age": 65, "sex": "male", "bmi": 50, "children": 5, "smoker": true, "region": "southwest"}')
 ```
 
-    {"species":"Iris setosa"}
+    {"charges":46277.67}
 
 We were able to make a prediction with the undecorated model. Notice that we actually haven't loaded the decorator for the model yet. We'll stop the service with CTL C and try that next.
 
 Adding a decorator to the IrisModelMock instance is done by adding the "decorators" key to the configuration:
 
 ```yaml
-service_title: REST Model Service With Decorators
+service_title: Insurance Charges Model Service
 models:
-  - qualified_name: iris_model
-    class_path: ml_model_decorators.mocks.IrisModel
+  - qualified_name: insurance_charges_model
+    class_path: insurance_charges_model.prediction.model.InsuranceChargesModel
     create_endpoint: true
     decorators:
       - class_path: ml_model_decorators.prediction_id_decorator.PredictionIDDecorator
@@ -606,35 +606,35 @@ With the service now restarted using the PredictionIDDecorator, we can view the 
 
 ![Endpoint Documentation]("endpoint_documentation.png")
 
-As you can see, the modified description of the model is now displayed instead of the old description. Now we can try to make a prediction again:
+As you can see, the modified description of the model is now displayed instead of the old description and the example value has the prediction_id field. Now we can try to make a prediction again:
 
 
 
 
 ```python
 !(curl -X 'POST' \
-  'http://127.0.0.1:8000/api/models/iris_model/prediction' \
+  'http://127.0.0.1:8000/api/models/insurance_charges_model/prediction' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -d '{"sepal_length": 6.0, "sepal_width": 3.0, "petal_length": 3.0, "petal_width": 2.0}')
+  -d '{"age": 65, "sex": "male", "bmi": 50, "children": 5, "smoker": true, "region": "southwest"}')
 ```
 
-    {"species":"Iris setosa","prediction_id":"306bddc1-0b2f-4421-b3a5-4b4adf9a2cf9"}
+    {"charges":46277.67,"prediction_id":"c2f17a69-4d89-4fba-ae50-4e971b288db3"}
 
-We've made a prediction, but now we have the generated prediction_id in the response.
+We've made a prediction without providing a prediction_id, and we have the generated prediction_id in the response.
 
 We can make another prediction request but with a provided prediction_id:
 
 
 ```python
 !(curl -X 'POST' \
-  'http://127.0.0.1:8000/api/models/iris_model/prediction' \
+  'http://127.0.0.1:8000/api/models/insurance_charges_model/prediction' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -d '{"prediction_id": "asdf-1234-asdf-1234", "sepal_length": 6.0, "sepal_width": 3.0, "petal_length": 3.0, "petal_width": 2.0}')
+  -d '{"age": 65, "sex": "male", "bmi": 50, "children": 5, "smoker": true, "region": "southwest", "prediction_id": "asdf-1234-asdf-1234"}')
 ```
 
-    {"species":"Iris setosa","prediction_id":"asdf-1234-asdf-1234"}
+    {"charges":46277.67,"prediction_id":"asdf-1234-asdf-1234"}
 
 As we expected, the model is now returning prediction ids along with the predictions themselves. 
 

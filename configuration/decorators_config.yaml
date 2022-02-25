@@ -1,7 +1,7 @@
-service_title: REST Model Service With Decorators
+service_title: Insurance Charges Model Service
 models:
-  - qualified_name: iris_model
-    class_path: ml_model_decorators.mocks.IrisModelMock
+  - qualified_name: insurance_charges_model
+    class_path: insurance_charges_model.prediction.model.InsuranceChargesModel
     create_endpoint: true
     decorators:
       - class_path: ml_model_decorators.prediction_id_decorator.PredictionIDDecorator
