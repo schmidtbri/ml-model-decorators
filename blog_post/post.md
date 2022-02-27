@@ -1,5 +1,5 @@
 Title: Decorator Pattern for ML Models
-Date: 2022-02-15 07:00
+Date: 2022-02-27 07:00
 Category: Blog
 Slug: ml-model-decorators
 Authors: Brian Schmidt
@@ -10,7 +10,7 @@ Summary: The decorator pattern is a software engineering pattern that allows sof
 
 The decorator pattern is a software engineering pattern that allows software to be more flexible, more reusable, and more cohesive. In this blog post, we’ll explore how decorators work, how to implement them, how to apply them to the MLModel base class, and how to deploy them in a REST service.
 
-We’ll be building on top of the MLModel base class that we’ve built in a [previous blog post](https://brianschmidt-78145.medium.com/introducing-the-ml-base-package-1cc80ded39b4). The MLModel base class is designed to be wrapped around the prediction functionality of a machine learning model. It has several properties that allow a model object to describe itself to the outside world, including its name, version, and input and output schemas. The MLModel base class also requires that any class that inherits from it to implement the \_\_init\_\_() method, and the predict() method. These two methods form the most simple functionality of a machine learning model, the \_\_init\_\_() method is where model parameters are loaded, and the predict() method is where predictions are made.
+We’ll be building on top of the MLModel base class that we’ve built in a [previous blog post](https://www.tekhnoal.com/introducing-ml-base-package.html). The MLModel base class is designed to be wrapped around the prediction functionality of a machine learning model. It has several properties that allow a model object to describe itself to the outside world, including its name, version, and input and output schemas. The MLModel base class also requires that any class that inherits from it to implement the \_\_init\_\_() method, and the predict() method. These two methods form the most simple functionality of a machine learning model, the \_\_init\_\_() method is where model parameters are loaded, and the predict() method is where predictions are made.
 
 
 ## The Decorator Pattern 
@@ -118,10 +118,10 @@ class MLModelDecorator(MLModel):
 
     def predict(self, data):
         return self.__dict__["_model"].predict(data=data)
+
+
+clear_output()
 ```
-
-    /Users/brian/Code/ml-model-decorators/venv/lib/python3.9/site-packages/ml_base/version.txt
-
 
 The MLModelDecorator base class is actually defined in the [ml_base package](https://github.com/schmidtbri/ml-base) in version 0.2.0 and above. We can also import the class from the ml_base package like this:
 
@@ -136,11 +136,13 @@ The base class for ML Model decorators is designed to hold a reference to an MLM
 
 To make this blog post a little shorter we won't build a new model to work with. Instead we'll install a model that we've built in the past.
 
-To install the model, we can use the pip command:
+To install the model, we can use the pip command and point it at the github repo of the model:
 
 
 ```python
-!pip install /Users/brian/Code/regression-model/dist/insurance_charges_model-0.1.0.tar.gz
+!pip install -e git+https://github.com/schmidtbri/regression-model#egg=insurance_charges_model
+    
+clear_output()
 ```
 
 The model is used to estimate insurance charges and we built it in a [previous blog post](https://www.tekhnoal.com/regression-model.html). The code for the model is in [this github repository](https://github.com/schmidtbri/regression-model).
@@ -289,17 +291,10 @@ prediction = decorator.predict(model_input)
 
 prediction
 ```
-
     Executing before prediction.
     Executing after prediction.
 
-
-
-
-
     InsuranceChargesModelOutput(charges=2231.7)
-
-
 
 The decorator instance executed before and after the model's predict() method and printed some messages.
 
@@ -309,7 +304,7 @@ Now we’ll build a decorator class that adds the ability to generate UUIDs for 
 
 To do this, we’ll have to do four things:
 
-- Moidfy the description of the model to add info about the prediction id.
+- Modify the description of the model to add info about the prediction id.
 - Modify the input schema of the model add an optional field that accepts UUIDs.
 - Modify the output schema of the model to add a field for the UUID.
 - Modify the predict() method to generate a UUID and return it alongside the prediction.
@@ -495,7 +490,7 @@ prediction
 
 
 
-    InsuranceChargesModelOutput(charges=2231.7, prediction_id='5c587edd-2137-4c5a-8849-844b05ab2ea1')
+    InsuranceChargesModelOutput(charges=2231.7, prediction_id='e84ab429-acec-4630-83d2-12809f222ae2')
 
 
 
@@ -532,14 +527,12 @@ This decorator will work with any model that works with the MLModel base class, 
 
 ## Adding Decorators to a Deployed Model
 
-In order to deploy a model with a decorator we'll need to create a service that can add decorators to the model instance right after it is intantiated. This is supported by the rest_model_service package in version 0.2.0 and above. We built the rest_model service package in a [previous blog post](https://brianschmidt-78145.medium.com/a-restful-ml-model-service-1e49f88e1b5b) to easily deploy MLModel instances.
+In order to deploy a model with a decorator we'll need to create a service that can add decorators to the model instance right after it is intantiated. This is supported by the rest_model_service package in version 0.2.0 and above. We built the rest_model service package in a [previous blog post](https://www.tekhnoal.com/rest-model-service.html) to easily deploy MLModel instances.
 
 First, we'll install the rest_model_service package.
 
 
 ```python
-from IPython.display import clear_output
-
 !pip install rest_model_service>=0.2.0
 
 clear_output()
@@ -619,7 +612,7 @@ As you can see, the modified description of the model is now displayed instead o
   -d '{"age": 65, "sex": "male", "bmi": 50, "children": 5, "smoker": true, "region": "southwest"}')
 ```
 
-    {"charges":46277.67,"prediction_id":"c2f17a69-4d89-4fba-ae50-4e971b288db3"}
+    {"charges":46277.67,"prediction_id":"5edbec33-ebec-4cdc-908b-e7d90d4bc2a2"}
 
 We've made a prediction without providing a prediction_id, and we have the generated prediction_id in the response.
 
