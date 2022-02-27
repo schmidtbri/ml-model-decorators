@@ -291,10 +291,17 @@ prediction = decorator.predict(model_input)
 
 prediction
 ```
+
     Executing before prediction.
     Executing after prediction.
 
+
+
+
+
     InsuranceChargesModelOutput(charges=2231.7)
+
+
 
 The decorator instance executed before and after the model's predict() method and printed some messages.
 
@@ -304,7 +311,7 @@ Now we’ll build a decorator class that adds the ability to generate UUIDs for 
 
 To do this, we’ll have to do four things:
 
-- Modify the description of the model to add info about the prediction id.
+- Moidfy the description of the model to add info about the prediction id.
 - Modify the input schema of the model add an optional field that accepts UUIDs.
 - Modify the output schema of the model to add a field for the UUID.
 - Modify the predict() method to generate a UUID and return it alongside the prediction.
@@ -559,7 +566,7 @@ uvicorn rest_model_service.main:app --reload
 
 We can access the documentation at the root of the model service:
 
-![Service Documentation]("service_documentation.png")
+![Service Documentation]({attach}service_documentation.png){ width=100% }
 
 The model is running inside of the "api/models/iris_model/prediction" endpoint. We can make a prediction with a curl command:
 
@@ -597,7 +604,7 @@ uvicorn rest_model_service.main:app --reload
 
 With the service now restarted using the PredictionIDDecorator, we can view the documentation for this endpoint:
 
-![Endpoint Documentation]("endpoint_documentation.png")
+![Endpoint Documentation]({attach}endpoint_documentation.png){ width=100% }
 
 As you can see, the modified description of the model is now displayed instead of the old description and the example value has the prediction_id field. Now we can try to make a prediction again:
 
