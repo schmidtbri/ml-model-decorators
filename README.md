@@ -1,32 +1,28 @@
-# apache-beam-ml-model-deployment
-Deploying an ML model in an Apache Beam job.
+# ML Model Decorators
 
+This repository contains code that shows how to create decorators for machine learning model instances.
 
-# Apache Beam ML Model Deployment
-
-![Test and Build](https://github.com/schmidtbri/apache-beam-ml-model-deployment/workflows/Test%20and%20Build/badge.svg)
-
-Deploying an ML model in a Apache Beam service.
-
-This code is used in this [blog post](https://medium.com/@brianschmidt_78145/an-apache-beam-ml-model-deployment-ac31c6f2d9b2).
+This code is used in this [blog post](https://medium.com/p/f0be67973cc3).
 
 ## Requirements
-Python 3
+
+- Python 3
 
 ## Installation 
+
 The Makefile included with this project contains targets that help to automate several tasks.
 
 To download the source code execute this command:
 
 ```bash
-git clone https://github.com/schmidtbri/apache-beam-ml-model-deployment
+git clone https://github.com/schmidtbri/ml-model-decorators
 ```
 
 Then create a virtual environment and activate it:
 
 ```bash
 # go into the project directory
-cd apache-beam-ml-model-deployment
+cd ml-model-decorators
 
 make venv
 
@@ -40,6 +36,7 @@ make dependencies
 ```
 
 ## Running the Unit Tests
+
 To run the unit test suite execute these commands:
 
 ```bash

@@ -311,7 +311,7 @@ Now we’ll build a decorator class that adds the ability to generate UUIDs for 
 
 To do this, we’ll have to do four things:
 
-- Moidfy the description of the model to add info about the prediction id.
+- Modify the description of the model to add info about the prediction id.
 - Modify the input schema of the model add an optional field that accepts UUIDs.
 - Modify the output schema of the model to add a field for the UUID.
 - Modify the predict() method to generate a UUID and return it alongside the prediction.
